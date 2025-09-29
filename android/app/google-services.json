@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "953590213666",
+    "project_id": "docterapp-5b393",
+    "storage_bucket": "docterapp-5b393.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:953590213666:android:b76258ce1b3620dcdb6e7b",
+        "android_client_info": {
+          "package_name": "com.example.docterapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "953590213666-t6v7s1cbnsninqeinlmg346813lnpqr6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALSHgpOKAf54hXxkgqSuyrYY1m2mfOaZE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "953590213666-t6v7s1cbnsninqeinlmg346813lnpqr6.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "953590213666-aoij6aiafet81olq7qd6vqcstg6epuu5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.docterapp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
