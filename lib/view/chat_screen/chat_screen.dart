@@ -6,8 +6,14 @@ import 'package:get/get.dart';
 class ChatScreen extends StatefulWidget {
   final String name;
   final String image;
+  final String uid;
 
-  const ChatScreen({super.key, required this.name, required this.image});
+  const ChatScreen({
+    super.key,
+    required this.name,
+    required this.image,
+    required this.uid,
+  });
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -52,13 +58,14 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           Expanded(
             child: StreamBuilder(
-              stream: messageController.getMessages(
-                widget.name,
-              ), // senderId placeholder
+              stream: messageController.getMessages(widget.uid),
               builder: (context, snapshot) {
-                if (!snapshot.hasData)
+                if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
+                }
+
                 final docs = snapshot.data!.docs;
+
                 return ListView.builder(
                   padding: const EdgeInsets.all(12),
                   itemCount: docs.length,
@@ -66,6 +73,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     final msg = docs[index].data();
                     final isMe =
                         msg['senderId'] == messageController.currentUid;
+
                     return Align(
                       alignment: isMe
                           ? Alignment.centerRight
@@ -148,7 +156,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: IconButton(
                       onPressed: () {
                         messageController.sendMessage(
-                          widget.name,
+                          widget.uid,
                           _controller.text,
                         );
                         _controller.clear();

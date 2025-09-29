@@ -119,6 +119,7 @@ class MessageScreen extends StatelessWidget {
                             image:
                                 doc['image'] ??
                                 "assets/images/default_avatar.png",
+                            uid: doc['uid'] ?? "",
                           ),
                         );
                       },
@@ -126,7 +127,7 @@ class MessageScreen extends StatelessWidget {
                         name: doc['name'] ?? "Unknown",
                         message: "Hello, how can I help you?",
                         time: "12:50",
-                        unreadCount: index.isEven ? 2 : 0,
+
                         image:
                             doc['image'] ?? "assets/images/default_avatar.png",
                       ),

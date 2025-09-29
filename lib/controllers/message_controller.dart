@@ -6,7 +6,6 @@ class MessageController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final currentUid = FirebaseAuth.instance.currentUser!.uid;
 
-  // Stream of messages for a chat
   Stream<QuerySnapshot<Map<String, dynamic>>> getMessages(String receiverUid) {
     final chatId = _getChatId(currentUid, receiverUid);
     return _firestore
@@ -17,106 +16,44 @@ class MessageController extends GetxController {
         .snapshots();
   }
 
-  // Send message to Firestore
+  // chat lis get
+  Stream<QuerySnapshot<Map<String, dynamic>>> getRecentChats() {
+    return _firestore
+        .collection('chats')
+        .where('participants', arrayContains: currentUid)
+        .orderBy('lastMessageTime', descending: true)
+        .snapshots();
+  }
+
+  // send msj
   Future<void> sendMessage(String receiverUid, String text) async {
     if (text.trim().isEmpty) return;
     final chatId = _getChatId(currentUid, receiverUid);
 
-    await _firestore.collection('chats').doc(chatId).set({
+    final messageData = {
+      'text': text,
+      'senderId': currentUid,
+      'receiverId': receiverUid,
+      'timestamp': FieldValue.serverTimestamp(),
+    };
+
+    final chatRef = _firestore.collection('chats').doc(chatId);
+
+    // Update Chat Metadata (last message + participants)
+    await chatRef.set({
       'participants': [currentUid, receiverUid],
+      'lastMessage': text,
+      'lastMessageTime': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
-    await _firestore.collection('chats').doc(chatId).collection('messages').add(
-      {
-        'text': text,
-        'senderId': currentUid,
-        'timestamp': FieldValue.serverTimestamp(),
-      },
-    );
+    // Add message to messages subcollection
+    await chatRef.collection('messages').add(messageData);
   }
 
-  // Chat ID generator (unique for two users)
+  // genret id
   String _getChatId(String uid1, String uid2) {
+    // Har user ke pair ke liye unique id banane ke liye sorting use karo
     List<String> uids = [uid1, uid2]..sort();
-    return uids.join('_');
+    return uids.join('_'); // e.g. doctor123_user456
   }
 }
-
-// import 'package:flutter/material.dart';
-
-// // 🔹 MessageTile same as before
-// class MessageTile extends StatelessWidget {
-//   final String name;
-//   final String message;
-//   final String time;
-//   final int unreadCount;
-//   final String image;
-
-//   const MessageTile({
-//     super.key,
-//     required this.name,
-//     required this.message,
-//     required this.time,
-//     this.unreadCount = 0,
-//     required this.image,
-//   });
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       margin: const EdgeInsets.only(bottom: 12),
-//       padding: const EdgeInsets.all(12),
-//       decoration: BoxDecoration(
-//         color: Colors.teal.shade50,
-//         borderRadius: BorderRadius.circular(12),
-//       ),
-//       child: Row(
-//         children: [
-//           CircleAvatar(radius: 25, backgroundImage: AssetImage(image)),
-//           const SizedBox(width: 12),
-//           Expanded(
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Text(
-//                   name,
-//                   style: const TextStyle(
-//                     fontWeight: FontWeight.bold,
-//                     fontSize: 16,
-//                   ),
-//                 ),
-//                 const SizedBox(height: 4),
-//                 Text(
-//                   message,
-//                   style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-//                   overflow: TextOverflow.ellipsis,
-//                 ),
-//               ],
-//             ),
-//           ),
-//           Column(
-//             children: [
-//               Text(
-//                 time,
-//                 style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-//               ),
-//               if (unreadCount > 0)
-//                 Container(
-//                   margin: const EdgeInsets.only(top: 6),
-//                   padding: const EdgeInsets.all(6),
-//                   decoration: const BoxDecoration(
-//                     color: Colors.teal,
-//                     shape: BoxShape.circle,
-//                   ),
-//                   child: Text(
-//                     "$unreadCount",
-//                     style: const TextStyle(color: Colors.white, fontSize: 12),
-//                   ),
-//                 ),
-//             ],
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
