@@ -1,25 +1,33 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:docterapp/controllers/appointment_controller.dart';
 import 'package:docterapp/view/appointment_screens/date_time_select.dart';
 import 'package:docterapp/view/payment_screen/payment_screen.dart';
 import 'package:docterapp/widgets/custom_button.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppointmentScreen extends StatefulWidget {
+  const AppointmentScreen({Key? key}) : super(key: key);
+
   @override
   State<AppointmentScreen> createState() => _AppointmentScreenState();
 }
 
 class _AppointmentScreenState extends State<AppointmentScreen> {
   final AppointmentController controller = Get.put(AppointmentController());
-
-  Map<String, dynamic>?
-  selectedAppointment; //  selected date & time store karega
+  Map<String, dynamic>? selectedAppointment;
 
   @override
   Widget build(BuildContext context) {
-    final doctor = Get.arguments;
+    final doctor = Get.arguments as Map<String, dynamic>?;
+
+    final doctorUid = doctor?["uid"]?.toString() ?? "";
+    final doctorName = doctor?["name"]?.toString() ?? "Unknown";
+    final doctorFee = (doctor?["fee"] ?? 0).toDouble();
+    final doctorDesc = doctor?["desc"]?.toString() ?? "Specialist";
+    final doctorImage =
+        doctor?["image"]?.toString() ?? "assets/images/male_doctor_1.png";
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -39,19 +47,18 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Doctor Card
+              // Doctor Info
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.asset(
-                      doctor?["image"] ?? "assets/images/male_doctor_1.png",
+                      doctorImage,
                       width: 90,
                       height: 90,
                       fit: BoxFit.cover,
@@ -62,34 +69,18 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                doctor?["name"] ?? "Unknown Doctor",
-                                style: GoogleFonts.openSans(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Row(
-                              children: const [
-                                Icon(Icons.call, color: Colors.teal),
-                                SizedBox(width: 14),
-                                Icon(Icons.chat, color: Colors.teal),
-                                SizedBox(width: 14),
-                                Icon(Icons.video_call, color: Colors.teal),
-                              ],
-                            ),
-                          ],
+                        Text(
+                          doctorName,
+                          style: GoogleFonts.openSans(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          doctor?["desc"] ?? "Specialist",
+                          doctorDesc,
                           style: const TextStyle(color: Colors.teal),
                         ),
                         const SizedBox(height: 6),
@@ -97,7 +88,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "Payment: ",
+                              "Payment:",
                               style: GoogleFonts.openSans(
                                 fontSize: 15,
                                 color: Colors.black,
@@ -105,7 +96,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                               ),
                             ),
                             Text(
-                              "\$${doctor?["fee"] ?? 0}",
+                              "\$${doctorFee.toStringAsFixed(2)}",
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.teal,
@@ -118,111 +109,94 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 20),
 
-              // Details
-              Text(
-                "Details",
-                style: GoogleFonts.openSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                doctor?["details"] ?? "No details available for this doctor.",
-                style: const TextStyle(color: Color(0xFF0B8FAC), fontSize: 13),
-              ),
-
-              // Doctor Card ke baad ye add kar do ↓
-              const SizedBox(height: 20),
-
-              Text(
-                "Working Hours",
-                style: GoogleFonts.openSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                doctor?["workingHours"] ?? "09:00 AM - 05:00 PM",
-                style: const TextStyle(color: Color(0xFF0B8FAC), fontSize: 13),
-              ),
-
-              const SizedBox(height: 16),
-
-              Text(
-                "Available Days",
-                style: GoogleFonts.openSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                doctor?["availableDays"] ?? "Monday - Friday",
-                style: const TextStyle(color: Color(0xFF0B8FAC), fontSize: 13),
-              ),
-
-              const SizedBox(height: 16),
-
-              const SizedBox(height: 20),
-
-              //  Selected Appointment (show karne ke liye)
+              // Selected Appointment
               if (selectedAppointment != null) ...[
-                const SizedBox(height: 10),
                 Text(
                   "Your Selected Appointment:",
                   style: GoogleFonts.openSans(
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  "Date: ${selectedAppointment!['date']}",
-                  style: const TextStyle(fontSize: 14, color: Colors.teal),
+                  "Date: ${selectedAppointment!['date'] != null ? DateFormat('dd MMM yyyy').format(selectedAppointment!['date'] as DateTime) : "Not selected"}",
+                  style: const TextStyle(color: Colors.teal),
                 ),
                 Text(
-                  "Time: ${selectedAppointment!['time']}",
-                  style: const TextStyle(fontSize: 14, color: Colors.teal),
+                  "Time: ${selectedAppointment!['time'] ?? "Not selected"}",
+                  style: const TextStyle(color: Colors.teal),
                 ),
               ],
 
               const SizedBox(height: 30),
 
-              SizedBox(
-                width: double.infinity,
-                child: CustomButton(
-                  text: "Book an Appointment",
-                  onPressed: () async {
-                    final result = await Get.to(
-                      () => const DateTimeSelect(),
-                    ); //  await
-                    if (result != null) {
-                      setState(() {
-                        selectedAppointment = result; // save selected date+time
-                      });
+              // Book Appointment Button
+              CustomButton(
+                text: "Book an Appointment",
+                onPressed: () async {
+                  final result = await Get.to<Map<String, dynamic>>(
+                    () => DateTimeSelect(),
+                  );
 
-                      Get.snackbar(
-                        "Success",
-                        "Appointment set on ${result['date']} at ${result['time']}",
-                        snackPosition: SnackPosition.TOP,
-                        backgroundColor: Colors.teal,
-                        colorText: Colors.white,
-                      );
-                    }
-                  },
-                ),
+                  // Check if user picked both date and time
+                  if (result == null ||
+                      result['date'] == null ||
+                      result['time'] == null ||
+                      result['time'].toString().isEmpty) {
+                    Get.snackbar(
+                      "Error",
+                      "You must select a date and time",
+                      snackPosition: SnackPosition.TOP,
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                    );
+                    return;
+                  }
+
+                  final DateTime selectedDate = result['date'] as DateTime;
+                  final String selectedTime = result['time'].toString();
+
+                  if (doctorUid.isEmpty ||
+                      selectedDate == null ||
+                      selectedTime == null ||
+                      selectedTime.isEmpty) {
+                    Get.snackbar(
+                      "Error",
+                      "Missing doctor info or date/time",
+                      snackPosition: SnackPosition.TOP,
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                    );
+                    return;
+                  }
+
+                  setState(() {
+                    selectedAppointment = {
+                      "date": selectedDate,
+                      "time": selectedTime,
+                    };
+                  });
+
+                  await controller.bookAppointment(
+                    doctorUid: doctorUid,
+                    doctorName: doctorName,
+                    date: selectedDate,
+                    time: selectedTime,
+                    fee: doctorFee,
+                  );
+                },
               ),
-              SizedBox(height: 40),
+
+              const SizedBox(height: 20),
+
+              // Payment Button
               CustomButton(
                 text: "Add Payment",
                 onPressed: () {
-                  Get.to(PaymentScreen());
+                  Get.to(() => PaymentScreen());
                 },
               ),
             ],

@@ -1,5 +1,6 @@
 import 'package:docterapp/controllers/home_screen_controller.dart';
 import 'package:docterapp/controllers/main_profile_controller.dart';
+import 'package:docterapp/view/appointment_screens/appointment_Screen.dart';
 
 import 'package:docterapp/view/home_screen/categories_screen.dart';
 import 'package:docterapp/view/home_screen/catogries_list%20_screen.dart';
@@ -300,7 +301,12 @@ class HomeTab extends StatelessWidget {
                                       ),
                                     ),
                                     IconButton(
-                                      onPressed: () {},
+                                      onPressed: () {
+                                        Get.to(
+                                          () => AppointmentScreen(),
+                                          arguments: doc,
+                                        );
+                                      },
                                       icon: const Icon(
                                         Icons.favorite_border,
                                         color: Color(0xFF7BC1B7),
@@ -321,7 +327,7 @@ class HomeTab extends StatelessWidget {
                                   children: [
                                     TextButton(
                                       onPressed: () {
-                                        // Get.to(() => AppointmentScreen());
+                                        Get.to(() => AppointmentScreen());
                                       },
                                       style: TextButton.styleFrom(
                                         foregroundColor: Colors.white,

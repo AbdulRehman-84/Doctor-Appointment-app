@@ -1,10 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:docterapp/controllers/docter_list_controllers.dart';
-import 'package:docterapp/view/chat_screen/chat_screen.dart';
-import 'package:docterapp/widgets/custom_textfield.dart';
+import 'package:docterapp/controllers/message_controller.dart';
 import 'package:docterapp/widgets/message_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'chat_screen.dart';
 
 class MessageScreen extends StatelessWidget {
   const MessageScreen({super.key});
@@ -12,14 +13,14 @@ class MessageScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DoctorController doctorController = Get.put(DoctorController());
+    final MessageController messageController = Get.put(MessageController());
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        leading: const Icon(Icons.arrow_back_ios, color: Colors.black),
         title: Text(
-          "Message",
+          "Messages",
           style: GoogleFonts.openSans(
             color: const Color(0xFF0B8FAC),
             fontWeight: FontWeight.bold,
@@ -31,110 +32,90 @@ class MessageScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CustomTextField(
-              label: "",
-              hint: "Search a Doctor",
-              prefixIcon: const Icon(Icons.search, color: Colors.grey),
-              suffixIcon: const Icon(Icons.mic, color: Colors.grey),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 16,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              "Active Now",
-              style: GoogleFonts.openSans(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 60,
-              child: Obx(() {
-                return ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: doctorController.doctor.length,
-                  itemBuilder: (context, index) {
-                    var doc = doctorController.doctor[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 28,
-                            backgroundImage: AssetImage(
-                              doc['image'] ??
-                                  "assets/images/default_avatar.png",
-                            ),
-                          ),
-                          Positioned(
-                            right: 0,
-                            bottom: 4,
-                            child: Container(
-                              width: 12,
-                              height: 12,
-                              decoration: BoxDecoration(
-                                color: Colors.green,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              }),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              "Messages",
-              style: GoogleFonts.openSans(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 10),
             Expanded(
-              child: Obx(() {
-                return ListView.builder(
-                  itemCount: doctorController.doctor.length,
-                  itemBuilder: (context, index) {
-                    var doc = doctorController.doctor[index];
-                    return InkWell(
-                      onTap: () {
-                        Get.to(
-                          () => ChatScreen(
-                            name: doc['name'] ?? "Unknown",
-                            image:
-                                doc['image'] ??
-                                "assets/images/default_avatar.png",
-                            uid: doc['uid'] ?? "",
-                          ),
-                        );
-                      },
-                      child: MessageTile(
-                        name: doc['name'] ?? "Unknown",
-                        message: "Hello, how can I help you?",
-                        time: "12:50",
+              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream: messageController.getRecentChats(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return const SizedBox();
 
-                        image:
-                            doc['image'] ?? "assets/images/default_avatar.png",
+                  final recentChats = snapshot.data!.docs;
+                  final doctorMap = {
+                    for (var doc in doctorController.doctor) doc['uid']: doc,
+                  };
+
+                  List<Widget> chatTiles = [];
+
+                  for (var chat in recentChats) {
+                    final participants = List<String>.from(
+                      chat['participants'],
+                    );
+                    final otherId = participants.firstWhere(
+                      (id) => id != messageController.currentUid,
+                    );
+                    final doctor = doctorMap[otherId];
+                    if (doctor == null) continue;
+
+                    final lastMessage = chat['lastMessage'] ?? "";
+                    final lastTime = chat['lastMessageTime'] as Timestamp?;
+
+                    chatTiles.add(
+                      InkWell(
+                        onTap: () async {
+                          // mark messages seen
+                          await messageController.markMessagesSeen(otherId);
+                          Get.to(
+                            () => ChatScreen(
+                              name: doctor['name'],
+                              image: doctor['image'],
+                              uid: doctor['uid'],
+                            ),
+                          );
+                        },
+                        child: MessageTile(
+                          name: doctor['name'],
+                          message: lastMessage,
+                          time: lastTime != null
+                              ? "${lastTime.toDate().hour}:${lastTime.toDate().minute}"
+                              : "",
+                          image: doctor['image'],
+                        ),
                       ),
                     );
-                  },
-                );
-              }),
+                  }
+
+                  // Doctors without chats
+                  for (var doctor in doctorController.doctor) {
+                    if (!recentChats.any(
+                      (chat) => List<String>.from(
+                        chat['participants'],
+                      ).contains(doctor['uid']),
+                    )) {
+                      chatTiles.add(
+                        InkWell(
+                          onTap: () {
+                            Get.to(
+                              () => ChatScreen(
+                                name: doctor['name'],
+                                image: doctor['image'],
+                                uid: doctor['uid'],
+                              ),
+                            );
+                          },
+                          child: MessageTile(
+                            name: doctor['name'],
+                            message: "Tap to chat",
+                            time: "",
+                            image: doctor['image'],
+                          ),
+                        ),
+                      );
+                    }
+                  }
+
+                  return ListView(children: chatTiles);
+                },
+              ),
             ),
           ],
         ),

@@ -8,7 +8,7 @@ class CustomButton extends StatelessWidget {
   final Color textColor;
   final bool isOutlined;
   final bool isLoading;
-  final double radius; // ✅ Add radius
+  final double radius; // Add radius
 
   const CustomButton({
     super.key,

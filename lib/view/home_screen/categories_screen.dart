@@ -5,14 +5,51 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class CategoriesDocterScreen extends StatelessWidget {
+class CategoriesDocterScreen extends StatefulWidget {
   const CategoriesDocterScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // yaha apna controller ko call karo (example)
-    final controller = Get.put(DoctorController());
+  State<CategoriesDocterScreen> createState() => _CategoriesDocterScreenState();
+}
 
+class _CategoriesDocterScreenState extends State<CategoriesDocterScreen> {
+  final DoctorController controller = Get.put(DoctorController());
+
+  final TextEditingController searchController = TextEditingController();
+  RxList filteredDoctors = <Map<String, dynamic>>[].obs;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initially show all doctors
+    filteredDoctors.value = controller.doctor;
+
+    // Listen to search text changes
+    searchController.addListener(() {
+      final query = searchController.text.toLowerCase();
+      if (query.isEmpty) {
+        filteredDoctors.value = controller.doctor;
+      } else {
+        filteredDoctors.value = controller.doctor
+            .where(
+              (doc) =>
+                  doc["name"].toString().toLowerCase().contains(query) ||
+                  (doc["desc"]?.toString().toLowerCase().contains(query) ??
+                      false),
+            )
+            .toList();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -28,29 +65,29 @@ class CategoriesDocterScreen extends StatelessWidget {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: CustomTextField(
+              controller: searchController,
               label: "",
               hint: "Search a Doctor",
               prefixIcon: const Icon(Icons.search, color: Colors.grey),
-              suffixIcon: const Icon(Icons.mic, color: Colors.grey),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
-                vertical: 16,
+                vertical: 14,
               ),
             ),
           ),
 
-          // listview
+          // Doctor List
           Expanded(
             child: Obx(
-              () => controller.doctor.isEmpty
-                  ? const Center(child: CircularProgressIndicator()) // loading
+              () => filteredDoctors.isEmpty
+                  ? const Center(child: Text("No doctors found"))
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: controller.doctor.length,
+                      itemCount: filteredDoctors.length,
                       itemBuilder: (context, index) {
-                        final doc = controller.doctor[index];
+                        final doc = filteredDoctors[index];
                         return Container(
                           margin: const EdgeInsets.only(bottom: 16),
                           padding: const EdgeInsets.all(12),
@@ -61,7 +98,6 @@ class CategoriesDocterScreen extends StatelessWidget {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              //  image firestore se URL ho to Image.network() use karna
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
                                 child:
@@ -118,7 +154,7 @@ class CategoriesDocterScreen extends StatelessWidget {
                                           "No description",
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(fontSize: 12),
+                                      style: const TextStyle(fontSize: 12),
                                     ),
                                     const SizedBox(height: 6),
                                     Row(
@@ -134,7 +170,9 @@ class CategoriesDocterScreen extends StatelessWidget {
                                           },
                                           style: TextButton.styleFrom(
                                             foregroundColor: Colors.white,
-                                            backgroundColor: Color(0xFF0B8FAC),
+                                            backgroundColor: const Color(
+                                              0xFF0B8FAC,
+                                            ),
                                             shape: RoundedRectangleBorder(
                                               borderRadius:
                                                   BorderRadius.circular(20),
