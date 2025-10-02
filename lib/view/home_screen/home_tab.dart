@@ -327,7 +327,10 @@ class HomeTab extends StatelessWidget {
                                   children: [
                                     TextButton(
                                       onPressed: () {
-                                        Get.to(() => AppointmentScreen());
+                                        Get.to(
+                                          () => AppointmentScreen(),
+                                          arguments: doc,
+                                        );
                                       },
                                       style: TextButton.styleFrom(
                                         foregroundColor: Colors.white,

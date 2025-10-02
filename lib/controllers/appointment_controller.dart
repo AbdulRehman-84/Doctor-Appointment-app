@@ -51,7 +51,7 @@ class AppointmentController extends GetxController {
         snackPosition: SnackPosition.TOP,
       );
     } catch (e, st) {
-      print("Firestore error: $e\n$st"); // Debug print
+      print("Firestore error: $e\n$st");
       Get.snackbar(
         "Error",
         "Failed to book appointment: $e",

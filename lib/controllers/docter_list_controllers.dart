@@ -17,7 +17,7 @@ class DoctorController extends GetxController {
     _db.collection("doctors").snapshots().listen((snapshot) {
       doctor.value = snapshot.docs.map((doc) {
         final data = doc.data();
-        data['id'] = doc.id; // Firestore document id
+        data['uid'] = doc.id; // Firestore document id
         return data;
       }).toList();
     });

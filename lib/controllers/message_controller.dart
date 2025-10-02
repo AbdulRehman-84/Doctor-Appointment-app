@@ -25,7 +25,7 @@ class MessageController extends GetxController {
       'receiverId': receiverUid,
       'text': text,
       'timestamp': FieldValue.serverTimestamp(),
-      'seen': false, // track if message is seen
+      'seen': false,
     };
 
     await messageRef.set(messageData);

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:docterapp/controllers/docter_list_controllers.dart';
 import 'package:docterapp/controllers/message_controller.dart';
+import 'package:docterapp/widgets/custom_textfield.dart';
 import 'package:docterapp/widgets/message_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -32,88 +33,147 @@ class MessageScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            CustomTextField(
+              label: "",
+              hint: "Search a Doctor",
+              prefixIcon: const Icon(Icons.search, color: Colors.grey),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 16,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              "Active Now",
+              style: GoogleFonts.openSans(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 60,
+              child: Obx(() {
+                return ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: doctorController.doctor.length,
+                  itemBuilder: (context, index) {
+                    final doc = doctorController.doctor[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: Stack(
+                        children: [
+                          CircleAvatar(
+                            radius: 28,
+                            backgroundImage: AssetImage(
+                              doc['image'] ??
+                                  "assets/images/default_avatar.png",
+                            ),
+                          ),
+                          Positioned(
+                            right: 0,
+                            bottom: 4,
+                            child: Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: Colors.green,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              }),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              "Doctors",
+              style: GoogleFonts.openSans(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 10),
             Expanded(
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: messageController.getRecentChats(),
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData) return const SizedBox();
+                  Map<String, Timestamp> recentMap = {};
+                  if (snapshot.hasData) {
+                    for (var doc in snapshot.data!.docs) {
+                      final participants = List<String>.from(
+                        doc['participants'],
+                      );
+                      final otherId = participants.firstWhere(
+                        (id) => id != messageController.currentUid,
+                      );
+                      recentMap[otherId] =
+                          doc['lastMessageTime'] ?? Timestamp.now();
+                    }
+                  }
 
-                  final recentChats = snapshot.data!.docs;
-                  final doctorMap = {
-                    for (var doc in doctorController.doctor) doc['uid']: doc,
-                  };
+                  // Split doctors into recent and others
+                  List<Map<String, dynamic>> recentDoctors = [];
+                  List<Map<String, dynamic>> otherDoctors = [];
+                  for (var doc in doctorController.doctor) {
+                    if (recentMap.containsKey(doc['uid'])) {
+                      recentDoctors.add({
+                        ...doc,
+                        'lastTime': recentMap[doc['uid']],
+                      });
+                    } else {
+                      otherDoctors.add(doc);
+                    }
+                  }
 
-                  List<Widget> chatTiles = [];
+                  // Sort recent doctors by last message time
+                  recentDoctors.sort(
+                    (a, b) => (b['lastTime'] as Timestamp).compareTo(
+                      a['lastTime'] as Timestamp,
+                    ),
+                  );
 
-                  for (var chat in recentChats) {
-                    final participants = List<String>.from(
-                      chat['participants'],
-                    );
-                    final otherId = participants.firstWhere(
-                      (id) => id != messageController.currentUid,
-                    );
-                    final doctor = doctorMap[otherId];
-                    if (doctor == null) continue;
+                  final allDoctors = [...recentDoctors, ...otherDoctors];
 
-                    final lastMessage = chat['lastMessage'] ?? "";
-                    final lastTime = chat['lastMessageTime'] as Timestamp?;
-
-                    chatTiles.add(
-                      InkWell(
-                        onTap: () async {
-                          // mark messages seen
-                          await messageController.markMessagesSeen(otherId);
+                  return ListView.builder(
+                    itemCount: allDoctors.length,
+                    itemBuilder: (context, index) {
+                      final doc = allDoctors[index];
+                      return InkWell(
+                        onTap: () {
                           Get.to(
                             () => ChatScreen(
-                              name: doctor['name'],
-                              image: doctor['image'],
-                              uid: doctor['uid'],
+                              name: doc['name'] ?? "Unknown",
+                              image:
+                                  doc['image'] ??
+                                  "assets/images/default_avatar.png",
+                              uid: doc['uid'], // 👈 ab unique hoga
                             ),
                           );
                         },
                         child: MessageTile(
-                          name: doctor['name'],
-                          message: lastMessage,
-                          time: lastTime != null
-                              ? "${lastTime.toDate().hour}:${lastTime.toDate().minute}"
-                              : "",
-                          image: doctor['image'],
-                        ),
-                      ),
-                    );
-                  }
-
-                  // Doctors without chats
-                  for (var doctor in doctorController.doctor) {
-                    if (!recentChats.any(
-                      (chat) => List<String>.from(
-                        chat['participants'],
-                      ).contains(doctor['uid']),
-                    )) {
-                      chatTiles.add(
-                        InkWell(
-                          onTap: () {
-                            Get.to(
-                              () => ChatScreen(
-                                name: doctor['name'],
-                                image: doctor['image'],
-                                uid: doctor['uid'],
-                              ),
-                            );
-                          },
-                          child: MessageTile(
-                            name: doctor['name'],
-                            message: "Tap to chat",
-                            time: "",
-                            image: doctor['image'],
-                          ),
+                          name: doc['name'] ?? "Unknown",
+                          message: "Tap to chat",
+                          time: "",
+                          image:
+                              doc['image'] ??
+                              "assets/images/default_avatar.png",
                         ),
                       );
-                    }
-                  }
-
-                  return ListView(children: chatTiles);
+                    },
+                  );
                 },
               ),
             ),
