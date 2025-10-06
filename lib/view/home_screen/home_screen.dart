@@ -1,5 +1,5 @@
-import 'package:docterapp/view/appointment_screens/date_time_select.dart';
 import 'package:docterapp/view/chat_screen/message_screen.dart';
+import 'package:docterapp/view/google%20maps/google_maps_screen.dart';
 import 'package:docterapp/view/profile_screen/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,7 +13,8 @@ class HomeScreen extends StatelessWidget {
     HomeTab(),
 
     // AppointmentScreen(),
-    DateTimeSelect(),
+    // DateTimeSelect(),
+    DoctorMapScreen(),
     MessageScreen(),
     ProfileScreen(),
   ];
@@ -47,7 +48,7 @@ class HomeScreen extends StatelessWidget {
             items: const [
               BottomNavigationBarItem(icon: Icon(Icons.home), label: ""),
               BottomNavigationBarItem(
-                icon: Icon(Icons.timelapse_rounded),
+                icon: Icon(Icons.location_pin),
                 label: "",
               ),
               BottomNavigationBarItem(icon: Icon(Icons.message), label: ""),

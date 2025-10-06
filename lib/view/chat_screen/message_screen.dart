@@ -159,7 +159,7 @@ class MessageScreen extends StatelessWidget {
                               image:
                                   doc['image'] ??
                                   "assets/images/default_avatar.png",
-                              uid: doc['uid'], // 👈 ab unique hoga
+                              uid: doc['uid'], // ab unique hoga
                             ),
                           );
                         },

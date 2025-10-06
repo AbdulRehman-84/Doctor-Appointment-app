@@ -31,7 +31,10 @@ class _ChatScreenState extends State<ChatScreen> {
         backgroundColor: Colors.white,
         elevation: 1,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_outlined,
+            color: Colors.black,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -113,7 +116,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
 
-          // ✍️ Input field
+          // Input field
           SafeArea(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -131,6 +134,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         controller: _controller,
                         maxLines: null,
                         decoration: const InputDecoration(
+                          prefixIcon: Icon(Icons.camera_alt_rounded),
                           hintText: "Write here",
                           border: InputBorder.none,
                         ),

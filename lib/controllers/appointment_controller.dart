@@ -39,9 +39,22 @@ class AppointmentController extends GetxController {
         'createdAt': FieldValue.serverTimestamp(),
       };
 
-      print("Booking appointment: $appointmentData"); // Debug line
+      print("Booking appointment: $appointmentData");
 
+      // Appointment save karega
       await _firestore.collection('appointments').add(appointmentData);
+
+      //  Notification doctor ke liye create hoga
+      await _firestore.collection("notifications").add({
+        "receiverId": doctorUid, // Doctor ko notification milegi
+        "senderId": user.uid, // Patient UID
+        "type": "appointment",
+        "message":
+            "New appointment booked on ${DateFormat('dd MMM yyyy').format(date)} at $time",
+        "seen": false,
+        "isRead": false,
+        "timestamp": FieldValue.serverTimestamp(),
+      });
 
       Get.snackbar(
         "Success",

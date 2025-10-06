@@ -30,6 +30,15 @@ class _DateTimeSelectState extends State<DateTimeSelect> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new_outlined,
+          ), // your custom icon
+          onPressed: () {
+            Navigator.of(context).pop(); // goes back
+          },
+        ),
+
         backgroundColor: Colors.white,
         elevation: 1,
         title: Text(
@@ -129,7 +138,7 @@ class _DateTimeSelectState extends State<DateTimeSelect> {
                   ),
                   onPressed: () {
                     if (_selectedDay != null && _selectedTime != null) {
-                      // ✅ Safe: both selected
+                      // Safe: both selected
                       Get.back(
                         result: {"date": _selectedDay, "time": _selectedTime},
                       );

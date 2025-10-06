@@ -149,7 +149,8 @@ class PaymentScreen extends StatelessWidget {
                           color: const Color(0xFF0B8FAC),
                           textColor: Colors.white,
                           onPressed: () {
-                            FocusScope.of(context).unfocus(); // close keyboard
+                            FocusScope.of(context).unfocus();
+                            // close keyboard
                             Get.to(() => const PaymentDoneScreen());
                           },
                         ),

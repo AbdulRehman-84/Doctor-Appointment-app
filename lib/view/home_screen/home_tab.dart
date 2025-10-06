@@ -1,9 +1,11 @@
 import 'package:docterapp/controllers/home_screen_controller.dart';
 import 'package:docterapp/controllers/main_profile_controller.dart';
+import 'package:docterapp/controllers/notification_controllers.dart';
 import 'package:docterapp/view/appointment_screens/appointment_Screen.dart';
 
 import 'package:docterapp/view/home_screen/categories_screen.dart';
 import 'package:docterapp/view/home_screen/catogries_list%20_screen.dart';
+import 'package:docterapp/widgets/favourite_icon.dart';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -12,7 +14,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 class HomeTab extends StatelessWidget {
   HomeTab({super.key});
+  final favController = Get.put(FavoriteController());
 
+  final notificationController = Get.put(NotificationController());
   final homeController controller = Get.put(homeController());
   final mainProfileController myprofile = Get.put(mainProfileController());
 
@@ -79,9 +83,47 @@ class HomeTab extends StatelessWidget {
                         ],
                       ),
                     ),
+
                     IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.notifications_none),
+                      onPressed: () {
+                        if (notificationController.unreadCount.value > 0) {
+                          Get.snackbar(
+                            "Notifications",
+                            "You have ${notificationController.unreadCount.value} new notifications",
+                            snackPosition: SnackPosition.TOP,
+                            backgroundColor: Colors.teal,
+                            colorText: Colors.white,
+                          );
+                        } else {
+                          Get.snackbar(
+                            "Notifications",
+                            "No new notifications",
+                            snackPosition: SnackPosition.TOP,
+                            backgroundColor: const Color(0xFF0B8FAC),
+                            colorText: Colors.white,
+                          );
+                        }
+                      },
+                      icon: Obx(() {
+                        return Stack(
+                          children: [
+                            const Icon(Icons.notifications_none, size: 28),
+                            if (notificationController.unreadCount.value > 0)
+                              Positioned(
+                                right: 0,
+                                top: 0,
+                                child: Container(
+                                  width: 12,
+                                  height: 12,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      }),
                     ),
                   ],
                 ),
@@ -300,20 +342,33 @@ class HomeTab extends StatelessWidget {
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
-                                    IconButton(
-                                      onPressed: () {
-                                        Get.to(
-                                          () => AppointmentScreen(),
-                                          arguments: doc,
-                                        );
-                                      },
-                                      icon: const Icon(
-                                        Icons.favorite_border,
-                                        color: Color(0xFF7BC1B7),
+
+                                    // Favorite Icon
+                                    Obx(
+                                      () => IconButton(
+                                        onPressed: () {
+                                          favController.toggleFavorite(
+                                            doc["id"].toString(),
+                                          ); // doctor ka unique id pass karo
+                                        },
+                                        icon: Icon(
+                                          favController.isFavorite(
+                                                doc["id"].toString(),
+                                              )
+                                              ? Icons.favorite
+                                              : Icons.favorite_border,
+                                          color:
+                                              favController.isFavorite(
+                                                doc["id"].toString(),
+                                              )
+                                              ? Colors.red
+                                              : const Color(0xFF7BC1B7),
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
+
                                 Text(
                                   doc["desc"]?.toString() ?? "No description",
                                   maxLines: 2,
