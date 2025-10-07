@@ -15,12 +15,111 @@ class DoctorMapScreen extends StatefulWidget {
 class _DoctorMapScreenState extends State<DoctorMapScreen> {
   final DoctorController controller = Get.put(DoctorController());
   late osm.MapController mapController;
+  final TextEditingController searchController = TextEditingController();
+
+  /// yahan doctors ke location ke sath unki detail store karenge
+  final Map<osm.GeoPoint, Map<String, dynamic>> doctorMap = {};
 
   @override
   void initState() {
     super.initState();
     mapController = osm.MapController(
       initPosition: osm.GeoPoint(latitude: 30.3753, longitude: 69.3451),
+    );
+  }
+
+  /// Doctor search by name
+  Future<void> _searchDoctor(String query) async {
+    if (query.isEmpty) return;
+
+    final matchedDoctor = controller.doctor.firstWhereOrNull(
+      (doc) => (doc["name"] ?? "").toString().toLowerCase().contains(
+        query.toLowerCase(),
+      ),
+    );
+
+    if (matchedDoctor != null) {
+      final loc = matchedDoctor["location"];
+      if (loc is firestore.GeoPoint) {
+        final geoPoint = osm.GeoPoint(
+          latitude: loc.latitude,
+          longitude: loc.longitude,
+        );
+
+        await mapController.changeLocation(geoPoint);
+        await mapController.setZoom(zoomLevel: 14.0);
+
+        Get.snackbar(
+          "Doctor Found",
+          matchedDoctor["name"] ?? "Unknown",
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 1),
+        );
+      }
+    } else {
+      Get.snackbar(
+        "Not Found",
+        "No doctor matched your search",
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 1),
+      );
+    }
+  }
+
+  /// 🔽 Bottom Sheet for doctor details
+  void _showDoctorDetails(Map<String, dynamic> doc) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundImage:
+                          doc["image"].toString().startsWith("http")
+                          ? NetworkImage(doc["image"])
+                          : AssetImage(doc["image"]) as ImageProvider,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        doc["name"] ?? "Unknown",
+                        style: GoogleFonts.openSans(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text("Speciality: ${doc["speciality"] ?? "N/A"}"),
+                Text("Fee: Rs. ${doc["fee"] ?? "N/A"}"),
+                Text("Rating: ⭐ ${doc["rating"] ?? "N/A"}"),
+                const SizedBox(height: 10),
+                Text(
+                  doc["desc"] ?? "",
+                  style: const TextStyle(fontSize: 13, color: Colors.grey),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  doc["details"] ?? "",
+                  style: const TextStyle(fontSize: 13, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -51,15 +150,16 @@ class _DoctorMapScreenState extends State<DoctorMapScreen> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        // Convert Firestore GeoPoint -> OSM GeoPoint
         final doctorLocations = controller.doctor
             .map((doc) {
               final loc = doc["location"];
               if (loc is firestore.GeoPoint) {
-                return osm.GeoPoint(
+                final geo = osm.GeoPoint(
                   latitude: loc.latitude,
                   longitude: loc.longitude,
                 );
+                doctorMap[geo] = doc; // doctor info ko map mein save
+                return geo;
               }
               return null;
             })
@@ -74,9 +174,9 @@ class _DoctorMapScreenState extends State<DoctorMapScreen> {
 
         return Stack(
           children: [
+            /// 🌍 Map Widget
             osm.OSMFlutter(
               controller: mapController,
-
               osmOption: osm.OSMOption(
                 zoomOption: const osm.ZoomOption(
                   initZoom: 10,
@@ -99,100 +199,123 @@ class _DoctorMapScreenState extends State<DoctorMapScreen> {
                 roadConfiguration: const osm.RoadOption(roadColor: Colors.blue),
               ),
 
+              /// Add markers after map ready
               onMapIsReady: (isReady) async {
                 if (isReady) {
-                  // Move map to first doctor
                   await mapController.changeLocation(firstLoc);
+                  await mapController.setZoom(zoomLevel: 12.0);
 
-                  // Add all doctor markers
-                  for (var doc in controller.doctor) {
-                    final loc = doc["location"];
-                    if (loc is firestore.GeoPoint) {
-                      final osmPoint = osm.GeoPoint(
-                        latitude: loc.latitude,
-                        longitude: loc.longitude,
-                      );
-
-                      await mapController.addMarker(
-                        osmPoint,
-                        markerIcon: osm.MarkerIcon(
-                          iconWidget: Tooltip(
-                            message: doc["speciality"] != null
-                                ? "${doc["name"]} • ${doc["speciality"]}"
-                                : doc["name"] ?? "Unknown",
-                            child: Column(
-                              children: [
-                                const Icon(
-                                  Icons.location_pin,
-                                  color: Colors.red,
-                                  size: 40,
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(6),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                        color: Colors.black26,
-                                        blurRadius: 4,
-                                        offset: Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 12,
-                                        backgroundImage: doc["image"] != null
-                                            ? NetworkImage(doc["image"])
-                                            : const AssetImage(
-                                                    "assets/images/doctor.png",
-                                                  )
-                                                  as ImageProvider,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        doc["name"] ?? "Unknown",
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                  for (var entry in doctorMap.entries) {
+                    await mapController.addMarker(
+                      entry.key,
+                      markerIcon: osm.MarkerIcon(
+                        iconWidget: Column(
+                          children: [
+                            const Icon(
+                              Icons.location_pin,
+                              color: Colors.red,
+                              size: 55,
                             ),
-                          ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Colors.black26,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                entry.value["name"] ?? "Unknown",
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
-                      );
-                    }
+                      ),
+                    );
                   }
+                }
+              },
+
+              /// 👇 Marker click handler
+              onGeoPointClicked: (geoPoint) {
+                final doc = doctorMap[geoPoint];
+                if (doc != null) {
+                  _showDoctorDetails(doc);
                 }
               },
             ),
 
+            /// 🔍 Search Bar
+            Positioned(
+              top: 10,
+              left: 15,
+              right: 15,
+              child: Material(
+                elevation: 5,
+                borderRadius: BorderRadius.circular(10),
+                child: TextField(
+                  controller: searchController,
+                  decoration: InputDecoration(
+                    hintText: "Search doctor by name...",
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: searchController,
+                      builder: (context, value, child) {
+                        return value.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  searchController.clear();
+                                },
+                              )
+                            : const SizedBox.shrink();
+                      },
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 15,
+                      vertical: 12,
+                    ),
+                  ),
+                  onSubmitted: _searchDoctor,
+                ),
+              ),
+            ),
+
+            /// ➕ ➖ Zoom buttons
             Positioned(
               right: 10,
               bottom: 80,
               child: Column(
                 children: [
                   FloatingActionButton(
+                    backgroundColor: const Color(0xFF0B8FAC),
                     heroTag: "zoomIn",
                     mini: true,
                     onPressed: () async => await mapController.zoomIn(),
-                    child: const Icon(Icons.add),
+                    child: const Icon(Icons.add, color: Colors.white),
                   ),
                   const SizedBox(height: 8),
                   FloatingActionButton(
+                    backgroundColor: const Color(0xFF0B8FAC),
                     heroTag: "zoomOut",
                     mini: true,
                     onPressed: () async => await mapController.zoomOut(),
-                    child: const Icon(Icons.remove),
+                    child: const Icon(Icons.remove, color: Colors.white),
                   ),
                 ],
               ),
