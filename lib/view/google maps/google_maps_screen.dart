@@ -1,4 +1,6 @@
 import 'package:docterapp/controllers/docter_list_controllers.dart';
+import 'package:docterapp/view/appointment_screens/appointment_Screen.dart';
+import 'package:docterapp/widgets/custom_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_osm_plugin/flutter_osm_plugin.dart' as osm;
 import 'package:get/get.dart';
@@ -50,6 +52,8 @@ class _DoctorMapScreenState extends State<DoctorMapScreen> {
         await mapController.setZoom(zoomLevel: 14.0);
 
         Get.snackbar(
+          backgroundColor: const Color(0xFF0B8FAC),
+          colorText: Colors.white,
           "Doctor Found",
           matchedDoctor["name"] ?? "Unknown",
           snackPosition: SnackPosition.TOP,
@@ -58,6 +62,8 @@ class _DoctorMapScreenState extends State<DoctorMapScreen> {
       }
     } else {
       Get.snackbar(
+        backgroundColor: const Color(0xFF0B8FAC),
+        colorText: Colors.white,
         "Not Found",
         "No doctor matched your search",
         snackPosition: SnackPosition.TOP,
@@ -66,7 +72,7 @@ class _DoctorMapScreenState extends State<DoctorMapScreen> {
     }
   }
 
-  /// 🔽 Bottom Sheet for doctor details
+  ///  Bottom Sheet thik raha gi
   void _showDoctorDetails(Map<String, dynamic> doc) {
     showModalBottomSheet(
       context: context,
@@ -115,6 +121,13 @@ class _DoctorMapScreenState extends State<DoctorMapScreen> {
                   doc["details"] ?? "",
                   style: const TextStyle(fontSize: 13, color: Colors.grey),
                 ),
+                SizedBox(height: 5),
+                CustomButton(
+                  text: "Detail",
+                  onPressed: () {
+                    Get.to(() => AppointmentScreen(), arguments: doc);
+                  },
+                ),
               ],
             ),
           ),
@@ -138,7 +151,7 @@ class _DoctorMapScreenState extends State<DoctorMapScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.my_location, color: Colors.blue),
+            icon: const Icon(Icons.my_location, color: Color(0xFF0B8FAC)),
             onPressed: () async {
               await mapController.currentLocation();
             },
@@ -174,7 +187,7 @@ class _DoctorMapScreenState extends State<DoctorMapScreen> {
 
         return Stack(
           children: [
-            /// 🌍 Map Widget
+            ///  Map Widget
             osm.OSMFlutter(
               controller: mapController,
               osmOption: osm.OSMOption(
@@ -214,7 +227,7 @@ class _DoctorMapScreenState extends State<DoctorMapScreen> {
                             const Icon(
                               Icons.location_pin,
                               color: Colors.red,
-                              size: 55,
+                              size: 65,
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -235,7 +248,7 @@ class _DoctorMapScreenState extends State<DoctorMapScreen> {
                               child: Text(
                                 entry.value["name"] ?? "Unknown",
                                 style: const TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black,
                                 ),
@@ -250,7 +263,7 @@ class _DoctorMapScreenState extends State<DoctorMapScreen> {
                 }
               },
 
-              /// 👇 Marker click handler
+              ///  Marker click handler
               onGeoPointClicked: (geoPoint) {
                 final doc = doctorMap[geoPoint];
                 if (doc != null) {
@@ -259,7 +272,7 @@ class _DoctorMapScreenState extends State<DoctorMapScreen> {
               },
             ),
 
-            /// 🔍 Search Bar
+            ///  Search Bar
             Positioned(
               top: 10,
               left: 15,
@@ -296,7 +309,7 @@ class _DoctorMapScreenState extends State<DoctorMapScreen> {
               ),
             ),
 
-            /// ➕ ➖ Zoom buttons
+            /// Zoom buttons
             Positioned(
               right: 10,
               bottom: 80,

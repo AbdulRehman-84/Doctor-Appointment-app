@@ -117,7 +117,8 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                                   onPressed: () {
                                     // Direct call using url_launcher
                                     final doctorPhone =
-                                        doctor?["phone"] ?? "0000000000";
+                                        doctor?["phone"]?.toString() ??
+                                        "0000000";
                                     final Uri callUri = Uri(
                                       scheme: 'tel',
                                       path: doctorPhone,

@@ -161,18 +161,18 @@ class _CategoriesDocterScreenState extends State<CategoriesDocterScreen> {
                                             () => IconButton(
                                               onPressed: () {
                                                 favController.toggleFavorite(
-                                                  doc["id"].toString(),
+                                                  doc["uid"].toString(),
                                                 ); // doctor ka unique id pass karo
                                               },
                                               icon: Icon(
                                                 favController.isFavorite(
-                                                      doc["id"].toString(),
+                                                      doc["uid"].toString(),
                                                     )
                                                     ? Icons.favorite
                                                     : Icons.favorite_border,
                                                 color:
                                                     favController.isFavorite(
-                                                      doc["id"].toString(),
+                                                      doc["uid"].toString(),
                                                     )
                                                     ? Colors.red
                                                     : const Color(0xFF7BC1B7),

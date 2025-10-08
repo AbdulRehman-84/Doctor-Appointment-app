@@ -1,6 +1,7 @@
 import 'package:docterapp/controllers/home_screen_controller.dart';
 import 'package:docterapp/controllers/main_profile_controller.dart';
 import 'package:docterapp/controllers/notification_controllers.dart';
+import 'package:docterapp/view/Notifications/notification.scree.dart';
 import 'package:docterapp/view/appointment_screens/appointment_Screen.dart';
 
 import 'package:docterapp/view/home_screen/categories_screen.dart';
@@ -17,6 +18,7 @@ class HomeTab extends StatelessWidget {
   final favController = Get.put(FavoriteController());
 
   final notificationController = Get.put(NotificationController());
+
   final homeController controller = Get.put(homeController());
   final mainProfileController myprofile = Get.put(mainProfileController());
 
@@ -87,13 +89,7 @@ class HomeTab extends StatelessWidget {
                     IconButton(
                       onPressed: () {
                         if (notificationController.unreadCount.value > 0) {
-                          Get.snackbar(
-                            "Notifications",
-                            "You have ${notificationController.unreadCount.value} new notifications",
-                            snackPosition: SnackPosition.TOP,
-                            backgroundColor: Colors.teal,
-                            colorText: Colors.white,
-                          );
+                          Get.to(() => NotificationScreen());
                         } else {
                           Get.snackbar(
                             "Notifications",

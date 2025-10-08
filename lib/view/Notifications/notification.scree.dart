@@ -1,11 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:docterapp/controllers/notification_controllers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class NotificationsScreen extends StatelessWidget {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String currentUid = FirebaseAuth.instance.currentUser!.uid;
+
+  final NotificationController notificationController = Get.put(
+    NotificationController(),
+  );
 
   NotificationsScreen({super.key});
 
@@ -25,6 +31,14 @@ class NotificationsScreen extends StatelessWidget {
             fontSize: 20,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.done_all, color: Colors.teal),
+            onPressed: () {
+              notificationController.markAllAsRead();
+            },
+          ),
+        ],
       ),
       body: StreamBuilder(
         stream: _firestore
@@ -53,34 +67,31 @@ class NotificationsScreen extends StatelessWidget {
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final data = docs[index].data() as Map<String, dynamic>;
-              final title = data["title"] ?? "No Title";
-              final body = data["body"] ?? "";
+              final message = data["message"] ?? "";
               final type = data["type"] ?? "";
               final timestamp = (data["timestamp"] as Timestamp?)?.toDate();
+              final seen = data["seen"] ?? false;
 
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: const Color(0xFF0B8FAC),
+                  backgroundColor: seen ? Colors.grey : const Color(0xFF0B8FAC),
                   child: const Icon(Icons.notifications, color: Colors.white),
                 ),
                 title: Text(
-                  title,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  message,
+                  style: TextStyle(
+                    fontWeight: seen ? FontWeight.normal : FontWeight.bold,
+                  ),
                 ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(body),
-                    if (timestamp != null)
-                      Text(
+                subtitle: timestamp != null
+                    ? Text(
                         "${timestamp.toLocal()}",
                         style: const TextStyle(
                           fontSize: 12,
                           color: Colors.grey,
                         ),
-                      ),
-                  ],
-                ),
+                      )
+                    : null,
                 trailing: type.isNotEmpty
                     ? Container(
                         padding: const EdgeInsets.symmetric(
@@ -100,6 +111,14 @@ class NotificationsScreen extends StatelessWidget {
                         ),
                       )
                     : null,
+                onTap: () async {
+                  await notificationController.markAsRead(docs[index].id);
+                  Get.snackbar(
+                    "Notification",
+                    "Marked as read",
+                    snackPosition: SnackPosition.TOP,
+                  );
+                },
               );
             },
           );

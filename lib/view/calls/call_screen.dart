@@ -19,7 +19,10 @@ class CallScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
         title: Text(
           "Call $name",
           style: GoogleFonts.openSans(
@@ -47,6 +50,7 @@ class CallScreen extends StatelessWidget {
             const SizedBox(height: 30),
             ElevatedButton.icon(
               onPressed: () async {
+                // ya ha call wala option open krna ka liya
                 final Uri callUri = Uri(scheme: 'tel', path: phone);
                 if (await canLaunchUrl(callUri)) {
                   await launchUrl(callUri);
